@@ -1,5 +1,4 @@
 import axios from 'axios';
-import Dashboard from '../../../../frontend/src/pages/Dashboard';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://vin2grow-latest-2.onrender.com';
 
