@@ -4,6 +4,13 @@ import adminApi from "../services/api";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://vin2grow-latest-2.onrender.com";
 
+const Loader = () => (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+    <div className="w-16 h-16 border-4 border-white border-t-green-500 rounded-full animate-spin"></div>
+  </div>
+);
+
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -132,88 +139,106 @@ const Products = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Capitalize category to match enum
-      const capitalizeCategory = (cat) => cat.replace(/\b\w/g, c => c.toUpperCase());
-      const formDataToSend = new FormData();
+const handleSubmit = async (e) => {
+  setIsLoading(true)
+  e.preventDefault();
+  try {
+    const capitalizeCategory = (cat) => cat.replace(/\b\w/g, c => c.toUpperCase());
+    const formDataToSend = new FormData();
 
-      Object.keys(formData).forEach((key) => {
-        if (key !== "images" && key !== "imagePreviews") {
-          if (key === "category") {
-            formDataToSend.append(key, capitalizeCategory(formData[key]));
-          } else {
-            formDataToSend.append(key, formData[key]);
-          }
+    Object.keys(formData).forEach((key) => {
+      if (key !== "images" && key !== "imagePreviews") {
+        if (key === "category") {
+          formDataToSend.append(key, capitalizeCategory(formData[key]));
+        } else {
+          formDataToSend.append(key, formData[key]);
+        }
+      }
+    });
+
+    // Only append new uploaded image files
+    if (formData.images.length > 0) {
+      formData.images.forEach((image) => {
+        formDataToSend.append("images", image);
+      });
+    }
+
+    formDataToSend.append("isAvailable", true);
+    formDataToSend.append("expiryDays", 7);
+
+    let response;
+    if (editingProductId) {
+     if (editingProductId) {
+      const images = formDataToSend.getAll("images");
+      toast.success("Product updated successfully!");
+    }    if (editingProductId) {
+      const images = formDataToSend.getAll("images");
+      images.forEach((img, idx) => {
+        if (img instanceof File) {
+          console.log(`Image ${idx}:`, img.name); // File name
+        } else {
+          console.log(`Image ${idx}:`, img); // Probably a string (URL or something else)
         }
       });
-
-      formData.images.forEach((image) => {
-        formDataToSend.append(`images`, image);
-      });
-
-      formDataToSend.append("isAvailable", true);
-      formDataToSend.append("expiryDays", 7);
-
-      let response;
-      if (editingProductId) {
-        response = await adminApi.products.update(
-          editingProductId,
-          formDataToSend
-        );
-        toast.success("Product updated successfully!");
-      } else {
-        response = await adminApi.products.create(formDataToSend);
-        toast.success("Product created successfully!");
-      }
-
-      const productsResponse = await adminApi.products.getAll();
-      setProducts(productsResponse.data);
-
-      setIsModalOpen(false);
-      setEditingProductId(null);
-    } catch (error) {
-      console.error("Failed to save product:", error);
-      toast.error(error.response?.data?.error || "Failed to save product");
     }
-  };
 
-  const handleEdit = async (product) => {
-    try {
-      setEditingProductId(product._id);
-      setFormData({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        stock: product.stock,
-        length: product.length || "",
-        width: product.width || "",
-        height: product.height || "",
-        images: [],
-        imagePreviews: product.images.map((image) => getImageUrl(image)),
-        discount: product.discount || 0,
-        isDiscountActive: product.isDiscountActive || false,
-        discountStartDate: product.discountStartDate || "",
-        discountEndDate: product.discountEndDate || "",
-        offerPrice: product.offerPrice || "",
-        offerStartDate: product.offerStartDate || "",
-        offerEndDate: product.offerEndDate || "",
-        isOfferActive: product.isOfferActive || false,
-      });
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error("Failed to load product for editing:", error);
-      toast.error("Failed to load product for editing");
+      toast.success("Product updated successfully!");
+    } else {
+      response = await adminApi.products.create(formDataToSend);
+      setIsLoading(false)
+      toast.success("Product created successfully!");
     }
-  };
+
+    const productsResponse = await adminApi.products.getAll();
+    setProducts(productsResponse.data);
+
+    setIsModalOpen(false);
+    setEditingProductId(null);
+  } catch (error) {
+    console.error("Failed to save product:", error);
+    toast.error(error.response?.data?.error || "Failed to save product");
+  }
+};
+
+
+const handleEdit = async (product) => {
+  try {
+    setEditingProductId(product._id);
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      category: product.category,
+      stock: product.stock,
+      length: product.length || "",
+      width: product.width || "",
+      height: product.height || "",
+      images: product.images.map((image) => image), // No file objects for existing Cloudinary images
+      imagePreviews: product.images.map((image) => image), // Keep for preview
+      discount: product.discount || 0,
+      isDiscountActive: product.isDiscountActive || false,
+      discountStartDate: product.discountStartDate || "",
+      discountEndDate: product.discountEndDate || "",
+      offerPrice: product.offerPrice || "",
+      offerStartDate: product.offerStartDate || "",
+      offerEndDate: product.offerEndDate || "",
+      isOfferActive: product.isOfferActive || false,
+    });
+    setIsModalOpen(true);
+  } catch (error) {
+    console.error("Failed to load product for editing:", error);
+    toast.error("Failed to load product for editing");
+  }
+};
+
 
   const handleDelete = async (productId) => {
+    setIsLoading(true)
     try {
       await adminApi.products.delete(productId);
       const response = await adminApi.products.getAll();
       setProducts(response.data);
+      setIsLoading(false)
       toast.success("Product deleted successfully");
     } catch (error) {
       console.error("Failed to delete product:", error);
@@ -231,15 +256,9 @@ const Products = () => {
     return price - (price * discount) / 100;
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "";
-    if (imagePath.startsWith("http")) return imagePath;
-    const cleanPath = imagePath.replace(/^\/+/, '');
-    return `${API_URL}/${cleanPath}`;
-  };
-
   return (
     <div className="p-4 md:p-6 bg-gray-900 min-h-screen pb-20 md:pb-6">
+      {isLoading && <Loader />}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
           Products Management
@@ -289,6 +308,7 @@ const Products = () => {
             key={product._id}
             className="bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden flex flex-col border border-green-600"
           >
+            
             {/* Product Image */}
             <div className="w-full h-48 relative group overflow-hidden">
               {product.isOfferActive && (
@@ -299,19 +319,23 @@ const Products = () => {
               {product.images && product.images.length > 0 ? (
                 <div className="relative h-full">
                   <img
-                    src={getImageUrl(product.images[0])}
+                    src={product.images[0].url}
                     alt={product.name}
                     className="w-full h-full object-contain"
                   />
                   {product.images.length > 1 && (
                     <div className="absolute bottom-0 right-0 p-2 flex gap-2">
                       {product.images.slice(1).map((image, index) => (
-                        <img
+                        <>
+            
+                       <img
                           key={index}
-                          src={getImageUrl(image)}
+                          src={image.url}
                           alt={`${product.name} ${index + 2}`}
                           className="w-12 h-12 object-contain rounded-lg border-2 border-gray-800"
                         />
+                        </>
+                       
                       ))}
                     </div>
                   )}
@@ -339,12 +363,7 @@ const Products = () => {
                   ₹{product.price.toLocaleString()}
                 </span>
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded bg-gray-700"
-                  >
-                    Edit
-                  </button>
+
                   <button
                     onClick={() => handleDelete(product._id)}
                     className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-gray-700"
@@ -360,7 +379,7 @@ const Products = () => {
 
       {/* Add/Edit Product Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-40">
           <div className="bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-green-600">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -518,7 +537,7 @@ const Products = () => {
                     {formData.imagePreviews.map((preview, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={preview}
+                          src={typeof preview === "string" ? preview : preview.url}
                           alt={`Preview ${index + 1}`}
                           className="w-full h-32 object-contain rounded-lg border border-gray-600"
                         />
