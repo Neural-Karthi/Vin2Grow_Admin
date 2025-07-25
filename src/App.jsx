@@ -6,6 +6,7 @@ import BottomNav from "./components/BottomNav";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Orders from "./pages/Orders";
+import Vendors from "./pages/Vendors";
 
 import Login from "./pages/auth/Login";
 
@@ -53,6 +54,7 @@ const App = () => {
                     <Route index element={<Dashboard />} />
                     <Route path="products" element={<Products />} />
                     <Route path="orders" element={<Orders />} />
+                    <Route path="vendors" element={<Vendors />} />
                   </Routes>
                 </div>
                 <BottomNav />

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://vin2grow.in';
+const API_URL =   'https://back3-728k.onrender.com' || 'https://vin2grow.in';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -97,6 +97,13 @@ const adminApi = {
     cancel: (id) => api.post(`/api/subscriptions/${id}/cancel`),
     pause: (id) => api.post(`/api/subscriptions/${id}/pause`),
     resume: (id) => api.post(`/api/subscriptions/${id}/resume`),
+  },
+
+  // Vendors
+  vendors: {
+    getAll: () => api.get('/api/vendor/admin/all'),
+    create: (data) => api.post('/api/vendor', data),
+    delete: (id) => api.delete(`/api/vendor/${id}`),
   },
 
 Dashboard:{

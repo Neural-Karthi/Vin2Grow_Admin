@@ -36,6 +36,7 @@ const Navbar = () => {
     { path: "/", label: "Dashboard" },
     { path: "/products", label: "Products" },
     { path: "/orders", label: "Orders" },
+    { path: "/vendors", label: "Vendors" },
     { path: "/logout", label: "Logout", isLogout: true },
   ];
 
