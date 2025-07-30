@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL =   'https://back3-728k.onrender.com' || 'https://vin2grow.in';
+const API_URL =   'https://vinbackend-iqsw.onrender.com' || 'https://vin2grow.in';
 
 const api = axios.create({
   baseURL: API_URL,
